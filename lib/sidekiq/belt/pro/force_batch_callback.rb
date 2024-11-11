@@ -21,13 +21,11 @@ module Sidekiq
           end
 
           def self.registered(app)
-            app.replace_content("/batches") do |content|
-              content.gsub!("</th>\n      <%", "</th><th><%= t('Force Callback') %></th>\n      <%")
-
-              content.gsub!(
-                "</td>\n        </tr>\n      <% end %>",
-                "</td>\n<td>#{action_button('success')}\n#{action_button('complete')}\n#{action_button('death')}</td>\n      </tr>\n    <% end %>"
-              )
+            app.replace_content("/batches/:bid") do |content|
+              intermediary_position = content.index("<th>Complete</th>")
+              intermediary_position_2 = content[intermediary_position..].index("</tr>")
+              success_position = intermediary_position_2 + 5
+              content.insert(success_position, "<td>#{action_button('success')}</td>")
             end
 
             app.post("/batches/:bid/force_callback/:action") do
